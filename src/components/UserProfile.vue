@@ -65,7 +65,7 @@ export default {
         if(this.newPassword === this.confirmPassword) {
           alert("Password Same");
         } else {
-          alert("Password Mismatch")
+          alert("Password Mismatch ")
         }
       }
     },
