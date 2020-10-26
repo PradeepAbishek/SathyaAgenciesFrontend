@@ -6,11 +6,8 @@
           <v-row>
             <v-col cols="12" md="12" sm="12">
               <v-text-field
-                :append-icon="newIcon ? 'mdi-eye' : 'mdi-eye-off'"
-                :type="newIcon ? 'text' : 'password'"
-                @click:append="newIcon = !newIcon"
-                v-model="newPassword"
-                label="New Password"
+                v-model="customerName"
+                label="Customer Name"
                 required
                 :rules="mandatoryRule"
                 :color="color"
@@ -18,11 +15,26 @@
             </v-col>
             <v-col cols="12" md="12" sm="12">
               <v-text-field
-                :append-icon="confirmIcon ? 'mdi-eye' : 'mdi-eye-off'"
-                :type="confirmIcon ? 'text' : 'password'"
-                @click:append="confirmIcon = !confirmIcon"
-                v-model="confirmPassword"
-                label="Confirm Password"
+                v-model="address"
+                label="Address"
+                required
+                :rules="mandatoryRule"
+                :color="color"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="12" sm="12">
+              <v-text-field
+                v-model="phoneNumber"
+                label="Phone Number"
+                required
+                :rules="mandatoryRule"
+                :color="color"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="12" sm="12">
+              <v-text-field
+                v-model="gstNumber"
+                label="GST Number"
                 required
                 :rules="mandatoryRule"
                 :color="color"
@@ -33,8 +45,8 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn :color="color" @click="updatePassword" dark>
-          Update Password <v-icon class="ml-2"> mdi-update </v-icon>
+        <v-btn :color="color" @click="addCustomer" dark>
+          Add <v-icon class="ml-2"> mdi-plus </v-icon>
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -42,25 +54,17 @@
 </template>
 <script>
 export default {
-  name: "UserProfile",
-
+  name: "NewCustomer",
   data: () => ({
     mandatoryRule: [(v) => !!v || "Mandatory Field"],
-    newIcon: false,
-    confirmIcon: false,
-    newPassword: "",
-    confirmPassword: "",
+    customerName: "",
+    address: "",
+    phoneNumber: "",
+    gstNumber: "",
   }),
   methods: {
-    updatePassword() {
+    addCustomer() {
       var t = this.$refs.form.validate();
-      if (t) {
-        if (this.newPassword === this.confirmPassword) {
-          alert("Password Same");
-        } else {
-          alert("Password Mismatch");
-        }
-      }
     },
   },
   computed: {

@@ -8,25 +8,39 @@
       v-if="userLogged"
     >
       <v-list dark nav>
-        <v-list-item-group>
-          <v-list-item
-            v-for="(item, i) in menuLists"
-            :key="i"
-            :to="item.path"
-            class="ttu fw5"
-          >
-            <v-list-item-icon>
-              <v-icon>{{ item.icon }}</v-icon>
-            </v-list-item-icon>
+        <v-list-item to="/about">
+          <v-list-item-icon>
+            <v-icon>mdi-view-dashboard</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title>Dashboard</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-group
+          v-for="item in menuLists"
+          :key="item.title"
+          :prepend-icon="item.action"
+          no-action
+        >
+          <template v-slot:activator>
             <v-list-item-content>
-              <v-list-item-title>{{ item.text }}</v-list-item-title>
+              <v-list-item-title v-text="item.title"></v-list-item-title>
+            </v-list-item-content>
+          </template>
+          <v-list-item
+            v-for="child in item.items"
+            :key="child.title"
+            :to="child.path"
+          >
+            <v-list-item-content>
+              <v-list-item-title v-text="child.title"></v-list-item-title>
             </v-list-item-content>
           </v-list-item>
-        </v-list-item-group>
+        </v-list-group>
       </v-list>
     </v-navigation-drawer>
     <v-app-bar app :color="color" dark v-if="userLogged">
-      <h1 class="ttu i">{{ companyName }}</h1>
+      <h1 class="ttu">{{ companyName }}</h1>
       <v-spacer></v-spacer>
       <v-btn icon href="#" @click="sideBar = !sideBar">
         <v-icon v-if="sideBar">mdi-arrow-right-thick</v-icon>
@@ -45,13 +59,15 @@
         <v-card>
           <v-list-item-content class="justify-center">
             <div class="mx-auto text-center">
-              <div class="ttu b">{{ userName }}</div>
+              <v-btn text :color="color">
+                {{ userName }}
+              </v-btn>
               <v-divider class="my-3"></v-divider>
-              <v-btn to="/changeProfile" depressed rounded text>
+              <v-btn to="/changeProfile" text :color="color">
                 Change Password
               </v-btn>
               <v-divider class="my-3"></v-divider>
-              <v-btn depressed rounded text>
+              <v-btn @click="logout" text :color="color">
                 Logout
               </v-btn>
             </div>
@@ -60,37 +76,59 @@
       </v-menu>
     </v-app-bar>
     <v-main>
+      <v-snackbar
+        :value="snackbar"
+        :color="snackbarColor"
+        top
+        right
+        absolute
+        text
+      >
+        {{ snackbarText }}
+      </v-snackbar>
       <router-view></router-view>
     </v-main>
   </v-app>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld";
-
 export default {
   name: "App",
-
-  components: {
-    HelloWorld,
-  },
-
   data: () => ({
     sideBar: true,
-    //
   }),
+  methods: {
+    logout() {
+      localStorage.clear();
+      this.$router.push("/");
+      // this.$store.commit("successSnackbar", "Logged out successfully");
+      this.$store.commit("removeUserLogged");
+    },
+  },
   computed: {
     userLogged() {
       return this.$store.state.userLogged;
     },
     userName() {
-      return this.$store.state.userDetails.userName;
+      return this.$store.state.userName;
     },
     companyName() {
       return this.$store.state.companyName;
     },
     color() {
       return this.$store.state.color;
+    },
+    snackbar() {
+      return this.$store.state.snackbar;
+    },
+    snackbarColor() {
+      return this.$store.state.snackbarColor;
+    },
+    snackbarText() {
+      return this.$store.state.snackbarText;
+    },
+    menuLists() {
+      return this.$store.state.menuLists;
     },
   },
 };
