@@ -1,51 +1,63 @@
 <template>
-  <div class="flex justify-center mt5">
-    <v-card elevation="8" class="w-40-l w-80-m w-80" rounded="3">
+  <v-container tag="section" fluid>
+    <v-card elevation="8" rounded="3"  outlined dark>
       <v-card-text>
         <v-form ref="form">
           <v-row>
-            <v-col cols="12" md="12" sm="12">
+            <v-col cols="12" md="6" sm="12">
               <v-text-field
-                v-model="companyName"
+                v-model="company.companyName"
                 label="Company Name"
                 required
                 :rules="mandatoryRule"
                 :color="color"
               ></v-text-field>
             </v-col>
-            <v-col cols="12" md="12" sm="12">
+            <v-col cols="12" md="6" sm="12">
               <v-text-field
-                v-model="address"
-                label="Address"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="12" sm="12">
-              <v-text-field
-                v-model="phoneNumber"
+                v-model="company.phoneNumber"
                 label="Phone Number"
                 required
                 :rules="mandatoryRule"
                 :color="color"
               ></v-text-field>
             </v-col>
-            <v-col cols="12" md="12" sm="12">
+            <v-col cols="12" md="6" sm="12">
               <v-text-field
-                v-model="gstNumber"
+                v-model="company.address"
+                label="Address"
+                required
+                :rules="mandatoryRule"
+                :color="color"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6" sm="12">
+              <v-text-field
+                v-model="company.gstNumber"
                 label="GST Number"
                 required
                 :rules="mandatoryRule"
                 :color="color"
               ></v-text-field>
             </v-col>
-            <v-col cols="12" md="12" sm="12">
+            <v-col cols="12" md="6" sm="12">
               <v-text-field
-                v-model="emailAddress"
+                v-model="company.mailAddress"
                 label="Mail Address"
                 required
                 :color="color"
+                :rules="mandatoryRule"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6" sm="12">
+              <v-text-field
+                v-model="company.initialBalanceAmount"
+                label="Initial Balance Amount"
+                required
+                :rules="mandatoryRule"
+                :color="color"
+                type="number"
+                min="0"
               ></v-text-field>
             </v-col>
           </v-row>
@@ -53,27 +65,49 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn :color="color" @click="addCompany" dark>
-          Add <v-icon class="ml-2"> mdi-plus </v-icon>
+        <v-btn :color="color" @click="addCompany" dark text small>
+          Add Company <v-icon class="ml-2" small> mdi-plus </v-icon>
         </v-btn>
       </v-card-actions>
     </v-card>
-  </div>
+  </v-container>
 </template>
 <script>
 export default {
   name: "NewCompany",
   data: () => ({
     mandatoryRule: [(v) => !!v || "Mandatory Field"],
-    companyName: "",
-    address: "",
-    phoneNumber: "",
-    gstNumber: "",
-    emailAddress: "",
+    company: {
+      companyName: "",
+      address: "",
+      phoneNumber: "",
+      gstNumber: "",
+      mailAddress: "",
+      initialBalanceAmount: "",
+      currentBalanceAmount: "",
+      purchases: [],
+      payments: [],
+    },
   }),
   methods: {
     addCompany() {
       var t = this.$refs.form.validate();
+      if (t) {
+        this.company.createdBy = this.$store.state.userName;
+        this.company.currentBalanceAmount = this.company.initialBalanceAmount;
+        this.$axios
+          .post("/companies/", this.company)
+          .then((res) => {
+            this.$store.commit(
+              "successSnackbar",
+              "Company Created Successfully"
+            );
+            this.$router.push("/viewCompany");
+          })
+          .catch((err) => {
+            this.$store.commit("errorSnackbar", err.response.data.detail);
+          });
+      }
     },
   },
   computed: {

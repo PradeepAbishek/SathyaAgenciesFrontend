@@ -1,0 +1,15 @@
+html {
+  font-weight: 300 !important;
+}
+.v-main {
+  background-color: #eee;
+}
+.v-input .v-label {
+  font-weight: 300;
+}
+.v-input input {
+  font-weight: 300;
+}
+.v-data-table > .v-data-table__wrapper > table > tbody > tr > td {
+  font-weight: 300;
+}

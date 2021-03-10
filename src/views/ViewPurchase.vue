@@ -1,100 +1,338 @@
 <template>
-  <div class="flex justify-center">
-    <data-table :headers="headers" :items="desserts" :items-per-page="5"></data-table>
-  </div>
+  <v-container fluid tag="section">
+    <v-dialog v-model="dialog" max-width="1200px" persistent>
+      <view-purchase-details
+        :companyName="purchaseCompanyName"
+        :headers="purchaseDetailHeaders"
+        :item="purchaseDetail"
+        :purchaseDate="purchaseDate"
+        :totalPurchaseAmount="purchaseAmount"
+        v-on:hideDialog="hideDialog"
+      ></view-purchase-details>
+    </v-dialog>
+    <v-card :color="color" dark class="pa-2">
+      <v-row dark>
+        <v-col sm="12" md="3" lg="6">
+          <v-text-field
+            v-model="search"
+            label="Search"
+            clearable
+            prepend-inner-icon="mdi-magnify"
+            outlined
+          ></v-text-field>
+        </v-col>
+        <v-col sm="12" md="3" lg="6">
+          <v-autocomplete
+            v-model="companyId"
+            :items="companyData"
+            item-text="companyName"
+            item-value="_id"
+            label="Company Name"
+            clearable
+            outlined
+          ></v-autocomplete>
+        </v-col>
+      </v-row>
+      <v-card elevation="8" rounded="3" outlined>
+        <v-data-table
+          :headers="purchaseMasterHeaders"
+          :items="purchaseData"
+          :items-per-page="10"
+          :search="search"
+        >
+          <template v-slot:[`item.actions`]="{ item }">
+            <v-icon
+              small
+              class="mr-2"
+              @click="viewPurchaseDetails(item)"
+              color="primary"
+            >
+              mdi-information-outline
+            </v-icon>
+          </template>
+          <template v-slot:[`item.isIGSTBill`]="{ item }">
+            <v-chip color="pink" class="ttu" small outlined label dark>
+              {{ item.isIGSTBill ? "IGST" : "CGST / SGST" }}
+            </v-chip>
+          </template>
+          <template v-slot:[`item.paymentMode`]="{ item }">
+            <v-chip color="cyan" class="ttu" dark small label outlined>
+              {{ item.paymentMode }}
+            </v-chip>
+          </template>
+        </v-data-table>
+      </v-card>
+    </v-card>
+  </v-container>
 </template>
 <script>
-import DataTable from "@/components/DataTable";
+import ViewPurchaseDetails from "@/components/ViewPurchaseDetails";
 export default {
   name: "ViewPurchase",
   components: {
-    DataTable,
+    ViewPurchaseDetails,
   },
   data: () => ({
-    headers: [
+    search: "",
+    companyId: "",
+    companyData: [],
+    purchaseMasterHeaders: [
       {
-        text: "Dessert (100g serving)",
-        align: "start",
+        text: "Company Name",
+        value: "companyDetails.companyName",
         sortable: false,
-        value: "name",
-      },
-      { text: "Calories", value: "calories" },
-      { text: "Fat (g)", value: "fat" },
-      { text: "Carbs (g)", value: "carbs" },
-      { text: "Protein (g)", value: "protein" },
-    ],
-    desserts: [
-      {
-        name: "Frozen Yogurt",
-        calories: 159,
-        fat: 6.0,
-        carbs: 24,
-        protein: 4.0,
       },
       {
-        name: "Ice cream sandwich",
-        calories: 237,
-        fat: 9.0,
-        carbs: 37,
-        protein: 4.3,
+        text: "Purchase Date",
+        value: "purchaseDate",
+        sortable: false,
       },
       {
-        name: "Eclair",
-        calories: 262,
-        fat: 16.0,
-        carbs: 23,
-        protein: 6.0,
+        text: "Bill Type",
+        value: "isIGSTBill",
+        sortable: false,
       },
       {
-        name: "Cupcake",
-        calories: 305,
-        fat: 3.7,
-        carbs: 67,
-        protein: 4.3,
+        text: "Product Amount",
+        value: "totalProductAmount",
+        sortable: false,
       },
       {
-        name: "Gingerbread",
-        calories: 356,
-        fat: 16.0,
-        carbs: 49,
-        protein: 3.9,
+        text: "GST Amount",
+        value: "totalGSTAmount",
+        sortable: false,
       },
       {
-        name: "Jelly bean",
-        calories: 375,
-        fat: 0.0,
-        carbs: 94,
-        protein: 0.0,
+        text: "Other Amount",
+        value: "otherAmount",
+        sortable: false,
       },
       {
-        name: "Lollipop",
-        calories: 392,
-        fat: 0.2,
-        carbs: 98,
-        protein: 0,
+        text: "Purchase Amount",
+        value: "totalPurchaseAmount",
+        sortable: false,
       },
       {
-        name: "Honeycomb",
-        calories: 408,
-        fat: 3.2,
-        carbs: 87,
-        protein: 6.5,
+        text: "Payment Mode",
+        value: "paymentMode",
+        sortable: false,
       },
       {
-        name: "Donut",
-        calories: 452,
-        fat: 25.0,
-        carbs: 51,
-        protein: 4.9,
+        text: "Paid Amount",
+        value: "paidPurchaseAmount",
+        sortable: false,
+        align: "end",
       },
       {
-        name: "KitKat",
-        calories: 518,
-        fat: 26.0,
-        carbs: 65,
-        protein: 7,
+        text: "Balance Amount",
+        value: "balancePurchaseAmount",
+        sortable: false,
+        align: "end",
+      },
+      {
+        text: "Freigh Charge",
+        value: "freighCharge",
+        sortable: false,
+      },
+      {
+        text: "Created By",
+        value: "createdBy",
+        sortable: false,
+      },
+      {
+        text: "Description",
+        value: "description",
+        sortable: false,
+      },
+      {
+        text: "Actions",
+        value: "actions",
+        sortable: false,
+        align: "end",
       },
     ],
+    purchaseData: [],
+    purchaseDetailGSTHeaders: [
+      {
+        text: "Name",
+        value: "productName",
+        sortable: false,
+        align: "center",
+      },
+      {
+        text: "HSN Code",
+        value: "productHSNCode",
+        sortable: false,
+      },
+      {
+        text: "Quantity",
+        value: "productQuantity",
+        sortable: false,
+      },
+      {
+        text: "Unit Price",
+        value: "unitPrice",
+        sortable: false,
+      },
+      {
+        text: "Product Price",
+        value: "productPrice",
+        sortable: false,
+      },
+      {
+        text: "Selling Price",
+        value: "sellingPrice",
+        sortable: false,
+      },
+      {
+        text: "GST %",
+        value: "productGST",
+        sortable: false,
+      },
+      {
+        text: "GST Amount",
+        value: "gstAmount",
+        sortable: false,
+      },
+      {
+        text: "CGST Amount",
+        value: "cgstAmount",
+        sortable: false,
+      },
+      {
+        text: "SGST Amount",
+        value: "sgstAmount",
+        sortable: false,
+      },
+      {
+        text: "Product Total Price",
+        value: "productTotalPrice",
+        sortable: false,
+      },
+    ],
+    purchaseDetailIGSTHeaders: [
+      {
+        text: "Name",
+        value: "productName",
+        sortable: false,
+      },
+      {
+        text: "HSN Code",
+        value: "productHSNCode",
+        sortable: false,
+      },
+      {
+        text: "Quantity",
+        value: "productQuantity",
+        sortable: false,
+      },
+      {
+        text: "Unit Price",
+        value: "unitPrice",
+        sortable: false,
+      },
+      {
+        text: "Product Price",
+        value: "productPrice",
+        sortable: false,
+      },
+      {
+        text: "Selling Price",
+        value: "sellingPrice",
+        sortable: false,
+      },
+      {
+        text: "GST %",
+        value: "productGST",
+        sortable: false,
+      },
+      {
+        text: "GST Amount",
+        value: "gstAmount",
+        sortable: false,
+      },
+      {
+        text: "IGST Amount",
+        value: "igstAmount",
+        sortable: false,
+      },
+      {
+        text: "Product Total Price",
+        value: "productTotalPrice",
+        sortable: false,
+      },
+    ],
+    dialog: false,
+    purchaseDetailHeaders: [],
+    purchaseDetail: [],
+    purchaseCompanyName: "",
+    purchaseDate: "",
+    purchaseAmount: "",
   }),
+  methods: {
+    getAllCompanies() {
+      this.$axios
+        .get("/companies/")
+        .then((res) => {
+          this.companyData = res.data;
+        })
+        .catch((err) => {
+          this.$store.commit("errorSnackbar", err.response.data.detail);
+        });
+    },
+    getAllPurchases() {
+      this.$axios
+        .get("/purchases/")
+        .then((res) => {
+          this.purchaseData = res.data.reverse();
+        })
+        .catch((err) => {
+          this.$store.commit("errorSnackbar", err.response.data.detail);
+        });
+    },
+    getAllPurchasesByCompany() {
+      if (this.companyId) {
+        this.$axios
+          .get("/purchases/" + this.companyId)
+          .then((res) => {
+            this.billData = res.data.reverse();
+          })
+          .catch((err) => {
+            this.$store.commit("errorSnackbar", err.response.data.detail);
+          });
+      } else {
+        this.getAllBills();
+      }
+    },
+    viewPurchaseDetails(item) {
+      this.purchaseDetail = item.purchaseDetails;
+      this.purchaseCompanyName = item.companyDetails.companyName;
+      this.purchaseAmount = item.totalPurchaseAmount;
+      this.purchaseDate = item.purchaseDate;
+      if (item.isIGSTBill) {
+        this.purchaseDetailHeaders = this.purchaseDetailIGSTHeaders;
+      } else {
+        this.purchaseDetailHeaders = this.purchaseDetailGSTHeaders;
+      }
+      this.dialog = true;
+    },
+    hideDialog() {
+      this.dialog = false;
+    },
+  },
+  computed: {
+    color() {
+      return this.$store.state.color;
+    },
+  },
+  watch: {
+    companyId: function(val) {
+      this.getAllPurchasesByCompany();
+    },
+  },
+  mounted() {
+    this.getAllPurchases();
+    this.getAllCompanies();
+  },
 };
 </script>

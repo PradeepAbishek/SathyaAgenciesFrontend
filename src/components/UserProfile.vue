@@ -33,7 +33,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn :color="color" @click="updatePassword" dark>
+        <v-btn :color="color" @click="updatePassword" dark class="ttu fw9">
           Update Password <v-icon class="ml-2"> mdi-update </v-icon>
         </v-btn>
       </v-card-actions>

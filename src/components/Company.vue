@@ -1,68 +1,74 @@
 <template>
-  <div class="flex justify-center mt4 mb4">
-    <v-card elevation="8" class="w-60-l w-80-m w-80" rounded="3">
-      <v-card-text>
-        <v-form ref="form">
-          <v-row>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="companyName"
-                label="Company Name"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="address"
-                label="Address"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="phoneNumber"
-                label="Phone Number"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="gstNumber"
-                label="GST Number"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="mailAddress"
-                label="Mail Address"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6"></v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-btn color="primary" dark block @click="hideEditing">
-                Close <v-icon class="ml-2"> mdi-close </v-icon>
-              </v-btn>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-btn :color="color" dark @click="updateCompany" block>
-                Update Company <v-icon class="ml-2"> mdi-update </v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card-text>
-    </v-card>
-  </div>
+  <v-card elevation="8" rounded="3" class="mt-5" dark>
+    <v-card-text>
+      <v-form ref="form">
+        <v-row>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.companyName"
+              label="Company Name"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.phoneNumber"
+              label="Phone Number"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.address"
+              label="Address"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.gstNumber"
+              label="GST Number"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.mailAddress"
+              label="Mail Address"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCompany.initialBalanceAmount"
+              label="Initial Balance Amount"
+              :color="color"
+              type="number"
+              min="0"
+              disabled
+            ></v-text-field>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-btn color="primary" dark @click="hideEditing" text small>
+            Close <v-icon class="ml-2" small> mdi-close </v-icon>
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn :color="color" dark @click="updateCompany" text small>
+            Update Company <v-icon class="ml-2" small> mdi-update </v-icon>
+          </v-btn>
+        </v-row>
+      </v-form>
+    </v-card-text>
+  </v-card>
 </template>
 <script>
 export default {
@@ -70,20 +76,34 @@ export default {
   props: ["company"],
   data: () => ({
     mandatoryRule: [(v) => !!v || "Mandatory Field"],
-    companyName: "",
-    address: "",
-    phoneNumber: "",
-    gstNumber: "",
+    editedCompany: {
+      companyName: "",
+      address: "",
+      phoneNumber: "",
+      gstNumber: "",
+      mailAddress: "",
+    },
     companyId: "",
   }),
   methods: {
     hideEditing() {
       this.$emit("hideEditing");
     },
-    updateCompany() {
+    async updateCompany() {
       var valid = this.$refs.form.validate();
       if (valid) {
-        console.log("Need to set update api to user");
+        await this.$axios
+          .put("/companies/" + this.companyId, this.editedCompany)
+          .then((res) => {
+            this.$store.commit(
+              "successSnackbar",
+              "Company Details Updated Successfully"
+            );
+            this.$emit("refreshCompanyData");
+          })
+          .catch((err) => {
+            this.$store.commit("errorSnackbar", err.response.data.detail);
+          });
         this.$emit("hideEditing");
       }
     },
@@ -94,11 +114,13 @@ export default {
     },
   },
   mounted() {
-    this.companyName = this.company.companyName;
-    this.address = this.company.address;
-    this.phoneNumber = this.company.phoneNumber;
-    this.gstNumber = this.company.gstNumber;
-    this.mailAddress = this.company.mailAddress;
+    this.editedCompany.companyName = this.company.companyName;
+    this.editedCompany.address = this.company.address;
+    this.editedCompany.phoneNumber = this.company.phoneNumber;
+    this.editedCompany.gstNumber = this.company.gstNumber;
+    this.editedCompany.mailAddress = this.company.mailAddress;
+    this.editedCompany.initialBalanceAmount = this.company.initialBalanceAmount;
+    this.companyId = this.company._id;
   },
 };
 </script>

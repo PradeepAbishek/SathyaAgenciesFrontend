@@ -1,77 +1,141 @@
 <template>
-  <v-card elevation="8" class="w-100" rounded="3">
+  <v-card elevation="8" class="w-100" rounded="3"  outlined>
     <v-card-text>
       <v-form ref="form">
         <v-row>
-          <v-col cols="12" md="6" sm="6">
+          <v-col cols="12" md="4" sm="3">
             <v-text-field
-              v-model="unitPrice"
-              label="Unit Price"
-              required
-              :rules="mandatoryRule"
-              :color="color"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" md="6" sm="6">
-            <v-text-field
-              v-model="productQuantity"
+              v-model="purchaseItem.productQuantity"
               label="Product Quantity"
               required
               :rules="mandatoryRule"
               :color="color"
+              type="number"
+              min="0"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" md="6" sm="6">
+          <v-col cols="12" md="4" sm="3">
             <v-text-field
-              v-model="productPrice"
-              label="Product Total Price"
-              disabled
+              v-model="purchaseItem.unitPrice"
+              label="Product Unit Price"
               required
               :rules="mandatoryRule"
               :color="color"
+              type="number"
+              min="0"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" sm="6" md="6">
+          <v-col cols="12" sm="4" md="4">
             <v-combobox
-              v-model="sellingPrice"
+              v-model="purchaseItem.sellingPrice"
               hide-selected
-              label="Selling Price"
+              label="Product Selling Price"
               multiple
               small-chips
               :color="color"
+              required
+              :rules="mandatoryRule1"
+              type="number"
+              min="0"
             >
             </v-combobox>
           </v-col>
-          <v-col cols="12" md="6" sm="6">
+          <v-col cols="12" :md="purchaseItem.isIGSTBill ? 4 : 3" sm="3">
             <v-text-field
-              v-model="productGST"
+              v-model="purchaseItem.productGST"
               label="GST %"
+              required
+              disabled
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" :md="purchaseItem.isIGSTBill ? 4 : 3" sm="3">
+            <v-text-field
+              v-model="purchaseItem.productHSNCode"
+              label="HSN Code"
+              required
+              disabled
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col
+            cols="12"
+            :md="purchaseItem.isIGSTBill ? 4 : 3"
+            sm="3"
+            v-if="!purchaseItem.isIGSTBill"
+          >
+            <v-text-field
+              v-model="purchaseItem.cgstAmount"
+              label="CGST Amount"
+              disabled
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col
+            cols="12"
+            :md="purchaseItem.isIGSTBill ? 4 : 3"
+            sm="3"
+            v-if="!purchaseItem.isIGSTBill"
+          >
+            <v-text-field
+              v-model="purchaseItem.sgstAmount"
+              label="SGST Amount"
+              disabled
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col
+            cols="12"
+            :md="purchaseItem.isIGSTBill ? 4 : 3"
+            sm="3"
+            v-if="purchaseItem.isIGSTBill"
+          >
+            <v-text-field
+              v-model="purchaseItem.igstAmount"
+              label="IGST Amount"
+              disabled
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="4" sm="3">
+            <v-text-field
+              v-model="purchaseItem.productPrice"
+              label="Product Price"
               disabled
               required
               :rules="mandatoryRule"
               :color="color"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" md="6" sm="6">
+          <v-col cols="12" md="4" sm="3">
             <v-text-field
-              v-model="gstAmount"
+              v-model="purchaseItem.gstAmount"
               label="GST Amount"
               disabled
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="4" sm="3">
+            <v-text-field
+              v-model="purchaseItem.productTotalPrice"
+              label="Product Total Price (Including GST)"
+              disabled
               required
               :rules="mandatoryRule"
               :color="color"
             ></v-text-field>
           </v-col>
-          <v-col cols="12" md="6" sm="6">
-            <v-btn color="primary" dark @click="updatePurchaseModalState" block>
-              Close <v-icon class="ml-2"> mdi-update </v-icon>
-            </v-btn>
-          </v-col>
-          <v-col cols="12" md="6" sm="6">
-            <v-btn :color="color" dark @click="updateProduct" block>
-              Update Product <v-icon class="ml-2"> mdi-update </v-icon>
-            </v-btn>
-          </v-col>
+        </v-row>
+        <v-row>
+          <v-btn color="primary" dark @click="closeModal" small text>
+            Close <v-icon class="ml-2" small> mdi-close </v-icon>
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn :color="color" dark @click="updateProduct" small text>
+            Update Product <v-icon class="ml-2" small> mdi-update </v-icon>
+          </v-btn>
         </v-row>
       </v-form>
     </v-card-text>
@@ -82,29 +146,22 @@ export default {
   name: "Purchase",
   props: ["purchaseItem", "purchaseItemIndex"],
   data: () => ({
-    productGST: "",
-    unitPrice: "",
-    productQuantity: "",
-    productPrice: "",
-    sellingPrice: "",
-    gstAmount: "",
     mandatoryRule: [(v) => !!v || "Mandatory Field"],
+    mandatoryRule1: [(v) => (v && v.length > 1) || "Mandatory Field"],
   }),
   methods: {
     updateProduct() {
-      this.purchaseItem.unitPrice = this.unitPrice;
-      this.purchaseItem.productQuantity = this.productQuantity;
-      this.purchaseItem.productPrice = this.productPrice;
-      this.purchaseItem.sellingPrice = this.sellingPrice;
-      this.purchaseItem.gstAmount = this.gstAmount;
-      Object.assign(
-        this.$store.state.purchaseItems[this.purchaseItemIndex],
-        this.purchaseItem
-      );
-      this.$store.commit("updatePurchaseModalState", false);
+      var form = this.$refs.form.validate();
+      if (form) {
+        Object.assign(
+          this.$store.state.purchaseItems[this.purchaseItemIndex],
+          this.purchaseItem
+        );
+        this.$emit("hideDialog");
+      }
     },
-    updatePurchaseModalState() {
-      this.$store.commit("updatePurchaseModalState", false);
+    closeModal() {
+      this.$emit("hideDialog");
     },
   },
   computed: {
@@ -113,22 +170,46 @@ export default {
     },
   },
   watch: {
-    unitPrice: function(val) {
-      this.productPrice = val * this.productQuantity;
-      this.gstAmount = (this.productPrice * this.productGST) / 100;
+    "purchaseItem.unitPrice": function(val) {
+      this.purchaseItem.productPrice = val * this.purchaseItem.productQuantity;
+      this.purchaseItem.gstAmount =
+        (this.purchaseItem.productPrice * this.purchaseItem.productGST) / 100;
+      if (this.purchaseItem.isIGSTBill) {
+        this.purchaseItem.igstAmount =
+          (this.purchaseItem.productPrice * this.purchaseItem.productGST) / 100;
+      } else {
+        this.purchaseItem.cgstAmount =
+          (this.purchaseItem.productPrice *
+            (this.purchaseItem.productGST / 2)) /
+          100;
+        this.purchaseItem.sgstAmount =
+          (this.purchaseItem.productPrice *
+            (this.purchaseItem.productGST / 2)) /
+          100;
+      }
+      this.purchaseItem.productTotalPrice =
+        this.purchaseItem.productPrice + this.purchaseItem.gstAmount;
     },
-    productQuantity: function(val) {
-      this.productPrice = val * this.unitPrice;
-      this.gstAmount = (this.productPrice * this.productGST) / 100;
+    "purchaseItem.productQuantity": function(val) {
+      this.purchaseItem.productPrice = val * this.purchaseItem.unitPrice;
+      this.purchaseItem.gstAmount =
+        (this.purchaseItem.productPrice * this.purchaseItem.productGST) / 100;
+      if (this.purchaseItem.isIGSTBill) {
+        this.purchaseItem.igstAmount =
+          (this.purchaseItem.productPrice * this.purchaseItem.productGST) / 100;
+      } else {
+        this.purchaseItem.cgstAmount =
+          (this.purchaseItem.productPrice *
+            (this.purchaseItem.productGST / 2)) /
+          100;
+        this.purchaseItem.sgstAmount =
+          (this.purchaseItem.productPrice *
+            (this.purchaseItem.productGST / 2)) /
+          100;
+      }
+      this.purchaseItem.productTotalPrice =
+        this.purchaseItem.productPrice + this.purchaseItem.gstAmount;
     },
-  },
-  mounted() {
-    this.productGST = this.purchaseItem.productGST;
-    this.unitPrice = this.purchaseItem.unitPrice;
-    this.productQuantity = this.purchaseItem.productQuantity;
-    this.productPrice = this.purchaseItem.productPrice;
-    this.sellingPrice = this.purchaseItem.sellingPrice;
-    this.gstAmount = this.purchaseItem.gstAmount;
   },
 };
 </script>

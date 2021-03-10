@@ -14,7 +14,14 @@ import NewProduct from "@/views/NewProduct";
 import ViewProduct from "@/views/ViewProduct";
 import NewPurchase from "@/views/NewPurchase";
 import ViewPurchase from "@/views/ViewPurchase";
+import NewBill from "@/views/NewBill";
+import ViewBill from "@/views/ViewBill";
+import Dashboard from "@/views/Dashboard";
 import store from "../store/index";
+import NewPayment from "@/views/NewPayment";
+import ViewPayment from "@/views/ViewPayment";
+import NewReturn from "@/views/NewReturn";
+import ViewReturn from "@/views/ViewReturn";
 
 Vue.use(VueRouter);
 
@@ -30,14 +37,9 @@ const routes = [
     component: UserProfile,
   },
   {
-    path: "/about",
-    name: "About",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: function() {
-      return import(/* webpackChunkName: "about" */ "../views/About.vue");
-    },
+    path: "/dashboard",
+    name: "Dashboard",
+    component: Dashboard,
   },
   {
     path: "/newUser",
@@ -99,6 +101,36 @@ const routes = [
     name: "View Purchase",
     component: ViewPurchase,
   },
+  {
+    path: "/newBill",
+    name: "New Bill",
+    component: NewBill,
+  },
+  {
+    path: "/viewBill",
+    name: "View Bill",
+    component: ViewBill,
+  },
+  {
+    path: "/newPayment",
+    name: "New Payment",
+    component: NewPayment,
+  },
+  {
+    path: "/viewPayment",
+    name: "View Payments",
+    component: ViewPayment,
+  },
+  {
+    path: "/newReturn",
+    name: "New Return",
+    component: NewReturn,
+  },
+  {
+    path: "/viewReturn",
+    name: "View Returns",
+    component: ViewReturn,
+  },
 ];
 
 const router = new VueRouter({
@@ -108,15 +140,37 @@ const router = new VueRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  if (to.name !== "Login" && localStorage.getItem("userLogged") !== "true")
-    next({ name: "Login" });
-  else {
-    if (localStorage.getItem("userLogged") === "true") {
-      store.commit("setUserLogged");
-      store.commit("setUserName", localStorage.getItem("userName"));
+  if (Vue.$cookies.get("sathyaAgencies")) {
+    const accessToken = Vue.$cookies.get("sathyaAgencies").access_token;
+    const isAdmin = Vue.$cookies.get("sathyaAgencies").isAdmin;
+    const userName = Vue.$cookies.get("sathyaAgencies").userName;
+
+    if (!store.state.userLogged && accessToken !== null) {
+      store.commit("setUserLogged", true);
     }
-    if (to.name === "Login" && localStorage.getItem("userLogged") === "true")
-      next({ name: "About" });
+    if (!store.state.adminUser && isAdmin) {
+      store.commit("updateAdminUser", true);
+    }
+    if (store.state.userName === "") {
+      store.commit("setUserName", userName);
+    }
+    if (to.name !== "New Purchase" && store.state.purchaseItems.length > 0) {
+      store.commit("resetPurchaseDetails");
+    }
+    if (to.name !== "New Bill" && store.state.billItems.length > 0) {
+      store.commit("resetBillDetails");
+    }
+  } else {
+    store.commit("setUserLogged", false);
+    store.commit("updateAdminUser", false);
+  }
+
+  if (to.name !== "Login" && !store.state.userLogged) {
+    next({ name: "Login" });
+  } else {
+    if (to.name === "Login" && store.state.userLogged) {
+      next({ name: "Dashboard" });
+    }
     next();
   }
 });

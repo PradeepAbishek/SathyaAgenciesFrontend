@@ -4,16 +4,16 @@
       app
       :expand-on-hover="sideBar"
       :mini-variant="sideBar"
-      :color="color"
+      color="#2c061f"
       v-if="userLogged"
     >
       <v-list dark nav>
-        <v-list-item to="/about">
+        <v-list-item to="/dashboard">
           <v-list-item-icon>
             <v-icon>mdi-view-dashboard</v-icon>
           </v-list-item-icon>
           <v-list-item-content>
-            <v-list-item-title>Dashboard</v-list-item-title>
+            <v-list-item-title class="ttu fw4">Dashboard</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
         <v-list-group
@@ -24,7 +24,10 @@
         >
           <template v-slot:activator>
             <v-list-item-content>
-              <v-list-item-title v-text="item.title"></v-list-item-title>
+              <v-list-item-title
+                class="ttu fw4"
+                v-text="item.title"
+              ></v-list-item-title>
             </v-list-item-content>
           </template>
           <v-list-item
@@ -33,19 +36,21 @@
             :to="child.path"
           >
             <v-list-item-content>
-              <v-list-item-title v-text="child.title"></v-list-item-title>
+              <v-list-item-title
+                class="ttu fw4"
+                v-text="child.title"
+              ></v-list-item-title>
             </v-list-item-content>
           </v-list-item>
         </v-list-group>
       </v-list>
     </v-navigation-drawer>
-    <v-app-bar app :color="color" dark v-if="userLogged">
-      <h1 class="ttu">{{ companyName }}</h1>
-      <v-spacer></v-spacer>
+    <v-app-bar app color="#2c061f" dark v-if="userLogged">
       <v-btn icon href="#" @click="sideBar = !sideBar">
-        <v-icon v-if="sideBar">mdi-arrow-right-thick</v-icon>
-        <v-icon v-else>mdi-arrow-left-thick</v-icon>
+        <v-icon>mdi-dots-vertical</v-icon>
       </v-btn>
+      <span class="ttu fw6">{{ companyName }}</span>
+      <v-spacer></v-spacer>
       <v-menu bottom min-width="200px" rounded offset-y>
         <template v-slot:activator="{ on }">
           <v-btn icon x-large v-on="on">
@@ -77,16 +82,38 @@
     </v-app-bar>
     <v-main>
       <v-snackbar
+        outlined
+        
+        transition="fab-transition"
         :value="snackbar"
         :color="snackbarColor"
         top
         right
-        absolute
-        text
+        :timeout="snackbarTimeout"
+        elevation="12"
       >
-        {{ snackbarText }}
+        <div class="tc f6 b i">{{ snackbarText }}</div>
       </v-snackbar>
-      <router-view></router-view>
+      <v-container
+        tag="section"
+        fluid
+        class="py-0"
+        v-if="$route.name !== 'Login'"
+      >
+        <v-row>
+          <v-col lg="12" sm="12" md="12">
+            <v-sheet class="tc ttu fw4 i" dark >
+              <span>{{ $route.name }}</span>
+              <v-progress-linear
+                buffer-value="0"
+                stream
+                color="white"
+              ></v-progress-linear>
+            </v-sheet>
+          </v-col>
+        </v-row>
+      </v-container>
+      <router-view />
     </v-main>
   </v-app>
 </template>
@@ -99,10 +126,7 @@ export default {
   }),
   methods: {
     logout() {
-      localStorage.clear();
-      this.$router.push("/");
-      // this.$store.commit("successSnackbar", "Logged out successfully");
-      this.$store.commit("removeUserLogged");
+      this.$store.dispatch("logout");
     },
   },
   computed: {
@@ -127,9 +151,17 @@ export default {
     snackbarText() {
       return this.$store.state.snackbarText;
     },
+    snackbarTimeout() {
+      return this.$store.state.snackbarTimeout;
+    },
     menuLists() {
       return this.$store.state.menuLists;
     },
   },
 };
 </script>
+<style>
+.v-list .v-list-item--active {
+  color: #1976d2 !important;
+}
+</style>

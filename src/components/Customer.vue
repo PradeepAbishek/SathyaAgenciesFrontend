@@ -1,60 +1,85 @@
 <template>
-  <div class="flex justify-center mt4 mb4">
-    <v-card elevation="8" class="w-50-l w-80-m w-80" rounded="3">
-      <v-card-text>
-        <v-form ref="form">
-          <v-row>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="customerName"
-                label="Customer Name"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="address"
-                label="Address"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="phoneNumber"
-                label="Phone Number"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-text-field
-                v-model="gstNumber"
-                label="GST Number"
-                required
-                :rules="mandatoryRule"
-                :color="color"
-              ></v-text-field>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-btn color="primary" dark block @click="hideEditing">
-                Close <v-icon class="ml-2"> mdi-close </v-icon>
-              </v-btn>
-            </v-col>
-            <v-col cols="12" md="6" sm="6">
-              <v-btn :color="color" dark @click="updateCustomer" block>
-                Update Customer <v-icon class="ml-2"> mdi-update </v-icon>
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card-text>
-    </v-card>
-  </div>
+  <v-card elevation="8" rounded="3" class="mt-5" dark>
+    <v-card-text>
+      <v-form ref="form">
+        <v-row>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCustomer.customerName"
+              label="Customer Name"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCustomer.address"
+              label="Address"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCustomer.phoneNumber"
+              label="Phone Number"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="6">
+            <v-text-field
+              v-model="editedCustomer.gstNumber"
+              label="GST Number"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="6" sm="12">
+            <v-text-field
+              v-model="editedCustomer.initialBalanceAmount"
+              label="Initial Balance Amount"
+              required
+              :color="color"
+              type="number"
+              min="0"
+              disabled
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="4" sm="12">
+            <v-text-field
+              v-model="editedCustomer.aadharNumber"
+              label="Aadhar Number"
+              required
+              :rules="mandatoryRule"
+              :color="color"
+            ></v-text-field>
+          </v-col>
+          <v-col cols="12" md="2" sm="2">
+            <v-switch
+              v-model="editedCustomer.isDealer"
+              inset
+              label="Is Dealer ?"
+              :color="color"
+            ></v-switch>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-btn color="primary" dark @click="hideEditing" text small>
+            Close <v-icon class="ml-2" small> mdi-close </v-icon>
+          </v-btn>
+          <v-spacer></v-spacer>
+          <v-btn :color="color" dark @click="updateCustomer" text small>
+            Update Customer <v-icon class="ml-2" small> mdi-update </v-icon>
+          </v-btn>
+        </v-row>
+      </v-form>
+    </v-card-text>
+  </v-card>
 </template>
 <script>
 export default {
@@ -62,20 +87,27 @@ export default {
   props: ["customer"],
   data: () => ({
     mandatoryRule: [(v) => !!v || "Mandatory Field"],
-    customerName: "",
-    address: "",
-    phoneNumber: "",
-    gstNumber: "",
-    customerId: "",
+    editedCustomer: {},
   }),
   methods: {
     hideEditing() {
       this.$emit("hideEditing");
     },
-    updateCustomer() {
+    async updateCustomer() {
       var valid = this.$refs.form.validate();
       if (valid) {
-        console.log("Need to set update api to user");
+        await this.$axios
+          .put("/customers/" + this.editedCustomer._id, this.editedCustomer)
+          .then((res) => {
+            this.$store.commit(
+              "successSnackbar",
+              "Customer Details Updated Successfully"
+            );
+            this.$emit("refreshCustomerData");
+          })
+          .catch((err) => {
+            this.$store.commit("errorSnackbar", err.response.data.detail);
+          });
         this.$emit("hideEditing");
       }
     },
@@ -86,10 +118,7 @@ export default {
     },
   },
   mounted() {
-    this.customerName = this.customer.customerName;
-    this.address = this.customer.address;
-    this.phoneNumber = this.customer.phoneNumber;
-    this.gstNumber = this.customer.gstNumber;
+    this.editedCustomer = Object.assign({}, this.customer);
   },
 };
 </script>
